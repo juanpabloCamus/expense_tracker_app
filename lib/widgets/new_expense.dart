@@ -14,10 +14,34 @@ class _NewExpenseState extends State<NewExpense> {
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
   DateTime? _selectedDate;
+  Category _selectedCategory = Category.leisure;
 
   void _handleSubmit() {
-    print(_titleController.text);
-    print(_amountController.text);
+    final enteredAmount = double.tryParse(_amountController.text);
+    final amountIsInvalid = enteredAmount == null || enteredAmount <= 0;
+
+    if (_titleController.text.trim().isEmpty ||
+        amountIsInvalid ||
+        _selectedDate == null) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Invalid input'),
+          content: const Text(
+            'Please make sure a valid title, amount, date and category was entered.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+              },
+              child: const Text('Close'),
+            )
+          ],
+        ),
+      );
+      return;
+    }
   }
 
   void _closeModal() {
@@ -38,6 +62,14 @@ class _NewExpenseState extends State<NewExpense> {
 
     setState(() {
       _selectedDate = pickedDate;
+    });
+  }
+
+  void _selectCategory(Category? value) {
+    if (value == null) return;
+
+    setState(() {
+      _selectedCategory = value;
     });
   }
 
@@ -90,8 +122,22 @@ class _NewExpenseState extends State<NewExpense> {
               )
             ],
           ),
+          const SizedBox(
+            height: 16,
+          ),
           Row(
             children: [
+              DropdownButton(
+                value: _selectedCategory,
+                items: Category.values
+                    .map((cat) => DropdownMenuItem(
+                          value: cat,
+                          child: Text(cat.name.toUpperCase()),
+                        ))
+                    .toList(),
+                onChanged: (value) => _selectCategory(value),
+              ),
+              const Spacer(),
               TextButton(
                 onPressed: _closeModal,
                 child: const Text('Cancel'),
